@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\cholo\Documents\master\RA2\Practica5_vs2019\CMakeFiles\60120c12952eb39eb41a4946b227fda1\update_mappings.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cholo\Documents\master\RA2\Practica5_vs2019\libs\glfw\src\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\Users\cholo\Documents\master\RA2\Practica5_vs2019\libs\glfw\src\mappings.h.in">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="C:\Users\cholo\Documents\master\RA2\Practica5_vs2019\libs\glfw\CMake\GenerateMappings.cmake" />
+    <None Include="C:\Users\cholo\Documents\master\RA2\Practica5_vs2019\libs\glfw\src\CMakeFiles\update_mappings" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{4E0FC110-0206-3022-AB23-79FEE4069840}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{EA0F4D64-0628-331D-93F0-5ECAEE4FC7D8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,71 @@
+<scene>
+	<mesh type="obj">
+		<string name="filename" value=".\scenes\cbox\meshes\backwall.obj"/>
+		<bsdf type="diffuse">
+			<color name="albedo" value="0.725 0.71 0.68"/>
+		</bsdf>
+	</mesh>
+
+	<mesh type="obj">
+		<string name="filename" value=".\scenes\cbox\meshes\ceiling.obj"/>
+		<bsdf type="diffuse">
+			<color name="albedo" value="0.725 0.71 0.68"/>
+		</bsdf>
+	</mesh>
+
+	<mesh type="obj">
+		<string name="filename" value=".\scenes\cbox\meshes\floor.obj"/>
+		<bsdf type="diffuse">
+			<color name="albedo" value="0.725 0.71 0.68"/>
+		</bsdf>
+	</mesh>
+
+	<mesh type="obj">
+		<string name="filename" value=".\scenes\cbox\meshes\rightwall.obj"/>
+		<bsdf type="diffuse">
+			<color name="albedo" value="0.725 0.71 0.68"/>
+		</bsdf>
+	</mesh>
+
+	<mesh type="obj">
+		<string name="filename" value=".\scenes\cbox\meshes\leftwall.obj"/>
+		<bsdf type="diffuse">
+			<color name="albedo" value="0.725 0.71 0.68"/>
+		</bsdf>
+	</mesh>
+
+	<mesh type="obj">
+		<string name="filename" value=".\scenes\cbox\meshes\sphere1.obj"/>
+		<bsdf type="diffuse">
+			<color name="albedo" value="0.5 0.5 0.5"/>
+		</bsdf>
+	</mesh>
+
+	<mesh type="obj">
+		<string name="filename" value=".\scenes\cbox\meshes\sphere2.obj"/>
+		<bsdf type="diffuse">
+			<color name="albedo" value="0.5 0.5 0.5"/>
+		</bsdf>
+	</mesh>
+
+	<emitter type="ambient">
+		<radiance name="radiance" value="0.5 0.5 0.5"/>
+	</emitter>
+
+	<emitter type="directional">
+		<position name="direction" value="0.0 1.0 0.0"/>
+		<radiance name="radiance" value="1.0 1.0 1.0"/>
+	</emitter>
+
+	<camera type="perspective">
+		<transform name="toWorld">
+			<lookat target="0 0.893051 4.41198"
+                    origin="0 0.919769 5.41159"
+                    up="0 1 0"/>
+		</transform>
+		<float name="fov" value="27.7856"/>
+		<integer name="width" value="800"/>
+		<integer name="height" value="600"/>
+		<clip name="far" value="15.0"/>
+	</camera>
+</scene>

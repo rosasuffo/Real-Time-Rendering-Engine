@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\cholo\Documents\master\RA2\Practica5_vs2019\CMakeFiles\60120c12952eb39eb41a4946b227fda1\INSTALL_force.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{4E0FC110-0206-3022-AB23-79FEE4069840}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
