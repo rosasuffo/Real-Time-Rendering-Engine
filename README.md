@@ -1,2 +1,2 @@
-# Real-Time-Rendering-Engine-
+# Real-Time-Rendering-Engine
 Rendering engine with Vulkan
