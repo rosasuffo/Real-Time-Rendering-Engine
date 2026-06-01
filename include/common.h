@@ -1,6 +1,5 @@
 #pragma once
 
-// old //
 
 #if defined(_MSC_VER)
 /* Disable some warnings on MSVC++ */
@@ -72,21 +71,13 @@ struct Vertex
     {}
 };
 
-typedef enum ImageBlockType
-{
-    IMAGE_BLOCK_2D          = 0,
-    IMAGE_BLOCK_2D_ARRAY    = 1,
-    IMAGE_BLOCK_3D          = 2,
-} ImageType;
-
 struct ImageBlock
 {
-    ImageType m_type = IMAGE_BLOCK_2D;
-    VkImage m_image = VK_NULL_HANDLE;
-    VkImageView m_image_view = VK_NULL_HANDLE;
-    VkFormat m_format;
-    VkDeviceMemory m_memory = VK_NULL_HANDLE;
-    VkSampler m_sampler = VK_NULL_HANDLE;
+    VkImage        m_image      = VK_NULL_HANDLE;
+    VkImageView    m_image_view = VK_NULL_HANDLE;
+    VkFormat       m_format;
+    VkDeviceMemory m_memory     = VK_NULL_HANDLE;
+    VkSampler      m_sampler    = VK_NULL_HANDLE;
 };
 
 struct Attachments
@@ -101,9 +92,6 @@ struct Attachments
     //ADDITIONAL RENDER TARGET
     ImageBlock m_ssao_attachment;
     ImageBlock m_ssao_blur_attachment;
-
-    // SHADOWS
-    ImageBlock m_shadow_attachment;
 };
 
 };

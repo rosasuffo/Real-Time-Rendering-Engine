@@ -7,5 +7,3 @@ C:\VulkanSDK\1.4.341.1\Bin\glslc.exe SSAO_v.vert -o SSAO_v.spv
 C:\VulkanSDK\1.4.341.1\Bin\glslc.exe SSAO_f.frag -o SSAO_f.spv
 C:\VulkanSDK\1.4.341.1\Bin\glslc.exe SSAOblur_v.vert -o SSAOblur_v.spv
 C:\VulkanSDK\1.4.341.1\Bin\glslc.exe SSAOblur_f.frag -o SSAOblur_f.spv
-C:\VulkanSDK\1.4.341.1\Bin\glslc.exe shadows_v.vert -o shadows_v.spv
-C:\VulkanSDK\1.4.341.1\Bin\glslc.exe shadows_g.geom -o shadows_g.spv

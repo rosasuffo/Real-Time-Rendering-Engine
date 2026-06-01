@@ -188,8 +188,8 @@ void ShadowPassVK::createFbo()
 {
     RendererVK& renderer = *m_runtime.m_renderer;
 
-    uint32_t width = 1024, height = 1024;
-    //renderer.getWindow().getWindowSize(width, height);
+    uint32_t width = 0, height = 0;
+    renderer.getWindow().getWindowSize(width, height);
 
     for (size_t i = 0; i < m_fbos.size(); i++)
     {
@@ -204,7 +204,7 @@ void ShadowPassVK::createFbo()
         framebuffer_create_info.pAttachments = attachments.data();
         framebuffer_create_info.width = width;
         framebuffer_create_info.height = height;
-        framebuffer_create_info.layers = 10;
+        framebuffer_create_info.layers = 1;
         // Create the framebuffer
 
         if (vkCreateFramebuffer(renderer.getDevice()->getLogicalDevice(), &framebuffer_create_info, nullptr, &m_fbos[i]))
