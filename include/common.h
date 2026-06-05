@@ -71,8 +71,18 @@ struct Vertex
     {}
 };
 
+/// NUEVO. Inserta varios tipos de imagen
+typedef enum ImageBlockType
+{
+    IMAGE_BLOCK_2D = 0,
+    IMAGE_BLOCK_2D_ARRAY = 1,
+    IMAGE_BLOCK_3D = 2,
+} ImageType;
+//
+
 struct ImageBlock
 {
+    ImageType m_type = IMAGE_BLOCK_2D; // NUEVO. valor por defecto
     VkImage        m_image      = VK_NULL_HANDLE;
     VkImageView    m_image_view = VK_NULL_HANDLE;
     VkFormat       m_format;
@@ -92,6 +102,9 @@ struct Attachments
     //ADDITIONAL RENDER TARGET
     ImageBlock m_ssao_attachment;
     ImageBlock m_ssao_blur_attachment;
+
+    // NUEVO: SHADOWS
+    ImageBlock m_shadow_attachment;
 };
 
 };

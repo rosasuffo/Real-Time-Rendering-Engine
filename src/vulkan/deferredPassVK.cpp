@@ -163,9 +163,9 @@ VkCommandBuffer DeferredPassVK::draw( const Frame& i_frame)
 
     VkClearValue clear_values[4];
     clear_values[ 0 ].color          = { { 0.0f, 0.0f, 0.0f, 0.0f } };
-    clear_values[ 0 ].color          = { { 0.0f, 0.0f, 0.0f, 0.0f } };
-    clear_values[ 0 ].color          = { { 0.0f, 0.0f, 0.0f, 0.0f } };
-    clear_values[ 0 ].color          = { { 0.0f, 0.0f, 0.0f, 0.0f } };
+    clear_values[ 1 ].color          = { { 0.0f, 0.0f, 0.0f, 0.0f } };
+    clear_values[ 2 ].color          = { { 0.0f, 0.0f, 0.0f, 0.0f } };
+    clear_values[ 3 ].color          = { { 0.0f, 0.0f, 0.0f, 0.0f } };
 
     render_pass_info.clearValueCount = 4;
     render_pass_info.pClearValues    = clear_values;
@@ -299,10 +299,10 @@ void DeferredPassVK::createRenderPass()
     attachments[ 4 ].samples        = VK_SAMPLE_COUNT_1_BIT;
     attachments[ 4 ].loadOp         = VK_ATTACHMENT_LOAD_OP_LOAD;
     attachments[ 4 ].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
-    attachments[ 4 ].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    attachments[ 4 ].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
+    attachments[ 4 ].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    attachments[ 4 ].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     attachments[ 4 ].initialLayout  = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-    attachments[ 4 ].finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    attachments[ 4 ].finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 
 
     VkAttachmentReference color_reference = {};
@@ -323,7 +323,7 @@ void DeferredPassVK::createRenderPass()
 
     VkAttachmentReference depth_reference = {};
     depth_reference.attachment = 4;
-    depth_reference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    depth_reference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 
     std::array<VkAttachmentReference, 4> attachments_references = { color_reference, normal_reference, position_reference, material_reference };
 

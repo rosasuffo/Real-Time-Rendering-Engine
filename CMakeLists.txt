@@ -51,6 +51,7 @@ include/vulkan/rendererVK.h
 include/vulkan/deviceVK.h
 include/vulkan/windowVK.h
 include/vulkan/meshVK.h
+include/vulkan/extensionsVK.h
 
 #render passes
 include/vulkan/renderPassVK.h
@@ -84,6 +85,7 @@ src/vulkan/rendererVK.cpp
 src/vulkan/windowVK.cpp
 src/vulkan/deviceVK.cpp
 src/vulkan/meshVK.cpp
+src/vulkan/extensionsVK.cpp
 
 #render passes
 src/vulkan/deferredPassVK.cpp

@@ -31,7 +31,11 @@ namespace MiniEngine
         { 
             return *m_camera; 
         }
-    
+        Camera& getCamera()
+        {
+            return *m_camera;
+        }
+
         const std::vector<EntityPtr>& getMeshes() const 
         {
             return m_entities; 

@@ -12,6 +12,7 @@ struct LightData
     vec4 m_light_pos;
     vec4 m_radiance;
     vec4 m_attenuattion;
+    mat4 m_view_projection;
 };
 
 layout( std140, set = 0, binding = 0 ) uniform PerFrameData
@@ -33,11 +34,35 @@ layout ( set = 0, binding = 2 ) uniform sampler2D i_position_and_depth;
 layout ( set = 0, binding = 3 ) uniform sampler2D i_normal;
 layout ( set = 0, binding = 4 ) uniform sampler2D i_material;
 layout ( set = 0, binding = 5 ) uniform sampler2D i_ssao;
-layout ( set = 0, binding = 6 ) uniform sampler2D i_shadowMap;
+layout ( set = 0, binding = 6 ) uniform sampler2DArray i_shadowMap;
 
 
 layout(location = 0) out vec4 out_color;
 
+float evalVisibility(int lightIdx)
+{
+    float bias = 0.005;
+
+    // proyectar fragmento a coordenadas de la luz
+    vec4 posWS = texture(i_position_and_depth,f_uvs);
+    vec4 posLS = per_frame_data.m_lights[lightIdx].m_view_projection * posWS;
+    vec3 pos = posLS.xyz / posWS.w; // ajustar a [0,1]
+    pos.xy = pos.xy * 0.5 + 0.5; // pasar a [-1,1] para las uvs
+                                 // la z es la profundidad del frag visto desde la luz
+
+    // comprobar si los valores estan dentro del shadowmap
+    if(pos.x < -1.0 || pos.y < -1.0 || pos.z < 0.0 || pos.x > 1.0 || pos.y > 1.0 || pos.z > 1.0)
+        return 1.0;
+
+    // samplear shadowmap con las uvs calculadas
+    float shadowmap_depth = texture(i_shadowMap,vec3(pos.xy, lightIdx)).r;
+
+    if(pos.z - bias > shadowmap_depth){
+        return 0.0;
+    }
+
+    return 1.0;
+}
 
 vec3 evalDiffuse()
 {
@@ -47,17 +72,18 @@ vec3 evalDiffuse()
     vec3  shading = vec3( 0.0 );
 
 
-    for( uint id_light = 0; id_light < per_frame_data.m_number_of_lights; id_light++ )
+    for( int id_light = 0; id_light < per_frame_data.m_number_of_lights; id_light++ )
     {
         LightData light = per_frame_data.m_lights[ id_light ];
         uint light_type = uint( floor( light.m_light_pos.a ) );
+        vec3 value = vec3(0.0);
 
         switch( light_type )
         {
             case 0: //directional
             {
                 vec3 l = normalize( light.m_light_pos.xyz );
-                shading += max( dot( n, l ), 0.0 ) * albedo.rgb;
+                value = max( dot( n, l ), 0.0 ) * albedo.rgb;
                 break;
             }
             case 1: //point
@@ -67,15 +93,17 @@ vec3 evalDiffuse()
                 float att = 1.0 / (light.m_attenuattion.x + light.m_attenuattion.y * dist + light.m_attenuattion.z * dist * dist );
                 vec3 radiance = light.m_radiance.rgb * att;
 
-                shading += max( dot( n, l ), 0.0 ) * albedo.rgb * radiance;
+                value = max( dot( n, l ), 0.0 ) * albedo.rgb * radiance;
                 break;
             }
             case 2: //ambient
             {
-                shading += light.m_radiance.rgb * albedo.rgb;
+                value = light.m_radiance.rgb * albedo.rgb;
                 break;
             }
         }
+        float visibility = evalVisibility(id_light);
+        shading += value * visibility;
     }
 
     return shading;
@@ -134,7 +162,10 @@ vec3 evalMicrofacets(){
         vec3 kd = (1-ks) * (1-metallic);
         vec3 diffuse = (kd * albedo.rgb) / PI;
 
-        shading += (diffuse + specular) * light.m_radiance.rgb * NdotL;
+        vec3 value = (diffuse + specular) * light.m_radiance.rgb * NdotL;
+        float visibility = evalVisibility(i);
+
+        shading += value * visibility;
     }
 
     return shading;
@@ -164,4 +195,5 @@ void main()
 
     float ssao = texture(i_ssao, f_uvs).r;
     out_color *= ssao;
+
 }

@@ -61,6 +61,7 @@ namespace MiniEngine
         VkPhysicalDeviceProperties2                      m_phyisical_device_properties2;
         VkPhysicalDeviceFeatures2                        m_physical_device_features2;
         VkPhysicalDeviceMemoryProperties2                m_physical_device_memory_properties2;
+        VkPhysicalDeviceBufferDeviceAddressFeatures      m_bufferDeviceAddressFeatures{};
         std::vector<VkQueueFamilyProperties>             m_queue_family_properties;
         std::vector<std::string>                         m_supported_extensions;
         std::vector<const char*>                         m_extensions;

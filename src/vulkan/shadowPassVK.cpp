@@ -17,9 +17,9 @@ using namespace MiniEngine;
 
 ShadowPassVK::ShadowPassVK(
     const Runtime& i_runtime,
-    const ImageBlock& i_depth_buffer) :
+    const ImageBlock& i_shadow_attachment) :
     RenderPassVK(i_runtime),
-    m_depth_buffer(i_depth_buffer)
+    m_shadow_attachment(i_shadow_attachment)
 {
     for (auto cmd : m_command_buffer)
     {
@@ -44,7 +44,8 @@ bool ShadowPassVK::initialize()
 
     //SHADER STAGES
     {
-        VkShaderModule vert_module = m_runtime.m_shader_registry->loadShader("./shaders/shadow.spv", VK_SHADER_STAGE_VERTEX_BIT);
+        VkShaderModule vert_module = m_runtime.m_shader_registry->loadShader("./shaders/vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+        VkShaderModule geom_module = m_runtime.m_shader_registry->loadShader("./shaders/shadows_g.spv", VK_SHADER_STAGE_GEOMETRY_BIT);
 
         {
             VkPipelineShaderStageCreateInfo vert_shader{};
@@ -53,7 +54,14 @@ bool ShadowPassVK::initialize()
             vert_shader.module = vert_module;
             vert_shader.pName = "main";
 
+            VkPipelineShaderStageCreateInfo geom_shader{};
+            geom_shader.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+            geom_shader.stage = VK_SHADER_STAGE_GEOMETRY_BIT;
+            geom_shader.module = geom_module;
+            geom_shader.pName = "main";
+
             m_pipelines[static_cast<uint32_t>(Material::TMaterial::Diffuse)].m_shader_stages[0] = vert_shader;
+			m_pipelines[static_cast<uint32_t>(Material::TMaterial::Diffuse)].m_shader_stages[1] = geom_shader;
         }
         {
             VkPipelineShaderStageCreateInfo vert_shader{};
@@ -62,7 +70,14 @@ bool ShadowPassVK::initialize()
             vert_shader.module = vert_module;
             vert_shader.pName = "main";
 
+            VkPipelineShaderStageCreateInfo geom_shader{};
+            geom_shader.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+            geom_shader.stage = VK_SHADER_STAGE_GEOMETRY_BIT;
+            geom_shader.module = geom_module;
+            geom_shader.pName = "main";
+
             m_pipelines[static_cast<uint32_t>(Material::TMaterial::Microfacets)].m_shader_stages[0] = vert_shader;
+			m_pipelines[static_cast<uint32_t>(Material::TMaterial::Microfacets)].m_shader_stages[1] = geom_shader;
         }
     }
 
@@ -126,7 +141,8 @@ VkCommandBuffer ShadowPassVK::draw(const Frame& i_frame)
     VkCommandBufferBeginInfo begin_info{};
     begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
-    uint32_t width = 0, height = 0;
+    uint32 width = 1024, height = 1024;
+    //renderer.getWindow().getWindowSize(width, height);
     renderer.getWindow().getWindowSize(width, height);
 
     VkRenderPassBeginInfo render_pass_info{};
@@ -188,13 +204,13 @@ void ShadowPassVK::createFbo()
 {
     RendererVK& renderer = *m_runtime.m_renderer;
 
-    uint32_t width = 0, height = 0;
-    renderer.getWindow().getWindowSize(width, height);
+    uint32_t width = 1024, height = 1024;
+    //renderer.getWindow().getWindowSize(width, height);
 
     for (size_t i = 0; i < m_fbos.size(); i++)
     {
         std::array<VkImageView, 1> attachments;
-        attachments[0] = m_depth_buffer.m_image_view;         // depth buffer
+        attachments[0] = m_shadow_attachment.m_image_view;         // depth buffer
 
         VkFramebufferCreateInfo framebuffer_create_info = {};
         framebuffer_create_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -204,7 +220,7 @@ void ShadowPassVK::createFbo()
         framebuffer_create_info.pAttachments = attachments.data();
         framebuffer_create_info.width = width;
         framebuffer_create_info.height = height;
-        framebuffer_create_info.layers = 1;
+        framebuffer_create_info.layers = 10;
         // Create the framebuffer
 
         if (vkCreateFramebuffer(renderer.getDevice()->getLogicalDevice(), &framebuffer_create_info, nullptr, &m_fbos[i]))
@@ -223,20 +239,18 @@ void ShadowPassVK::createRenderPass()
     std::array<VkAttachmentDescription, 1> attachments = {};
 
     // Depth  attachment
-    attachments[0].format = m_depth_buffer.m_format;
+    attachments[0].format = m_shadow_attachment.m_format;
     attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
     attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
     attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    attachments[0].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    attachments[0].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
     VkAttachmentReference depth_reference = {};
     depth_reference.attachment = 0;
     depth_reference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-    //std::array<VkAttachmentReference, 4> attachments_references = { color_reference, normal_reference, position_reference, material_reference };
 
     VkSubpassDescription subpass_description = {};
     subpass_description.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
@@ -384,8 +398,8 @@ void ShadowPassVK::createPipelines()
     multisampling.flags = 0;
 
 
-    uint32 width = 0, height = 0;
-    renderer.getWindow().getWindowSize(width, height);
+    uint32 width = 1024, height = 1024;
+    //renderer.getWindow().getWindowSize(width, height);
     VkExtent2D extend{ width, height };
 
     VkViewport viewport{};
@@ -468,7 +482,7 @@ void ShadowPassVK::createDescriptorLayout()
     per_frame_binding.binding = 0;
     per_frame_binding.descriptorCount = 1;
     per_frame_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    per_frame_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+    per_frame_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_GEOMETRY_BIT;
 
     VkDescriptorSetLayoutCreateInfo set_per_frame_info = {};
     set_per_frame_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;

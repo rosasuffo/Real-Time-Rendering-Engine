@@ -13,7 +13,7 @@ namespace MiniEngine
     public:
         ShadowPassVK(
             const Runtime& i_runtime,
-            const ImageBlock& i_depth_buffer);
+            const ImageBlock& i_shadow_attachment);
         virtual ~ShadowPassVK();
 
         bool            initialize() override;
@@ -45,7 +45,7 @@ namespace MiniEngine
             VkPipelineLayout                                                   m_pipeline_layouts;
             std::array<VkDescriptorSetLayout, 2                    > m_descriptor_set_layout; //2 sets, per frame and per object
             std::array<DescriptorsSets, 3                    > m_descriptor_sets;
-            std::array<VkPipelineShaderStageCreateInfo, 1                    > m_shader_stages;
+            std::array<VkPipelineShaderStageCreateInfo, 2                    > m_shader_stages;
         };
 
         std::array<DepthPipeline, 2> m_pipelines;
@@ -57,7 +57,7 @@ namespace MiniEngine
 
         std::unordered_map<uint32_t, std::vector<EntityPtr>> m_entities_to_draw;
 
-        const ImageBlock m_depth_buffer;
+        const ImageBlock m_shadow_attachment;
 
     };
 };
