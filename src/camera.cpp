@@ -72,15 +72,15 @@ Matrix4f Camera::getView()
 }
 
 
-Matrix4f Camera::getProjection() 
-{
-    if( m_dirty[ 1 ] )
+    Matrix4f Camera::getProjection() 
     {
-        m_camera_data.m_projection = m_is_perspective ? glm::perspective( m_fovy, static_cast<float>( m_width ) / static_cast<float>( m_height ), m_near, m_far ) : glm::ortho( m_left, m_right, m_bottom, m_top );
-        m_dirty[ 1 ] = false;
+        if( m_dirty[ 1 ] )
+        {
+            m_camera_data.m_projection = m_is_perspective ? glm::perspective( m_fovy, static_cast<float>( m_width ) / static_cast<float>( m_height ), m_near, m_far ) : glm::ortho( m_left, m_right, m_bottom, m_top );
+            m_dirty[ 1 ] = false;
+        }
+        return m_camera_data.m_projection;
     }
-    return m_camera_data.m_projection;
-}
 
 
 Matrix4f Camera::getViewProjection() 

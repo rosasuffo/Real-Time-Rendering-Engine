@@ -44,8 +44,8 @@ void main() {
         mat4 light_viewproj = per_frame_data.m_lights[i].m_view_projection;
         for(int v = 0; v < 3; v++){
             gl_Layer = i;
-            //gl_Position = light_viewproj * vec4(g_position[v],1.0);
-            gl_Position = vec4(g_position[v],1.0);
+            gl_Position = light_viewproj * vec4(g_position[v],1.0);
+            //gl_Position = vec4(g_position[v],1.0);
             EmitVertex();
         }
         EndPrimitive();

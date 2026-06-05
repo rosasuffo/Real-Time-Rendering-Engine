@@ -39,29 +39,31 @@ layout ( set = 0, binding = 6 ) uniform sampler2DArray i_shadowMap;
 
 layout(location = 0) out vec4 out_color;
 
-float evalVisibility(int lightIdx)
+float evalVisibility(int id_light)
 {
-    float bias = 0.005;
+    vec4 frag_pos = texture(i_position_and_depth,f_uvs);
 
-    // proyectar fragmento a coordenadas de la luz
-    vec4 posWS = texture(i_position_and_depth,f_uvs);
-    vec4 posLS = per_frame_data.m_lights[lightIdx].m_view_projection * posWS;
-    vec3 pos = posLS.xyz / posWS.w; // ajustar a [0,1]
-    pos.xy = pos.xy * 0.5 + 0.5; // pasar a [-1,1] para las uvs
-                                 // la z es la profundidad del frag visto desde la luz
+    vec4 light_space_pos = per_frame_data.m_lights[ id_light ].m_view_projection * frag_pos; // Transform the fragment position to the light's clip space
 
-    // comprobar si los valores estan dentro del shadowmap
-    if(pos.x < -1.0 || pos.y < -1.0 || pos.z < 0.0 || pos.x > 1.0 || pos.y > 1.0 || pos.z > 1.0)
-        return 1.0;
+    vec3 proj_coords = light_space_pos.xyz / light_space_pos.w; // Perspective divide
+    proj_coords = proj_coords * 0.5 + 0.5; // Transform to [0,1] range
 
-    // samplear shadowmap con las uvs calculadas
-    float shadowmap_depth = texture(i_shadowMap,vec3(pos.xy, lightIdx)).r;
-
-    if(pos.z - bias > shadowmap_depth){
-        return 0.0;
+    // Check if the projected coordinates are within the shadow map
+    if (proj_coords.x < 0.0 || proj_coords.x > 1.0 || 
+        proj_coords.y < 0.0 || proj_coords.y > 1.0 ||
+        proj_coords.z < 0.0 || proj_coords.z > 1.0)
+    {
+        return 1.0;  // If the fragment is outside the shadow map, consider it fully lit
     }
 
-    return 1.0;
+    // Sample the shadow map
+    float shadow = texture(i_shadowMap, vec3(proj_coords.xy, id_light)).r;
+  
+    // Compare the depth of the fragment with the depth stored in the shadow map
+    float bias = 0.005; // Bias to prevent shadow acne
+
+    return (proj_coords.z - bias) > shadow ? 0.0 : 1.0; // If the fragment is in shadow, return 0.0, otherwise return 1.0
+
 }
 
 vec3 evalDiffuse()
@@ -104,6 +106,7 @@ vec3 evalDiffuse()
         }
         float visibility = evalVisibility(id_light);
         shading += value * visibility;
+        //shading += value;
     }
 
     return shading;
@@ -166,6 +169,8 @@ vec3 evalMicrofacets(){
         float visibility = evalVisibility(i);
 
         shading += value * visibility;
+
+        //shading += (diffuse + specular) * light.m_radiance.rgb * NdotL;
     }
 
     return shading;
@@ -176,24 +181,17 @@ void main()
     float id_material = texture(i_material, f_uvs).r;
 
     float gamma = 2.2f;
-    float exposure = 1.0f;
+    float exposure = 0.0f;
+
     vec3 mapped;
-
     if(id_material == 0.0f){
-        mapped = vec3( 1.0f ) - exp(-evalDiffuse() * exposure);
+        mapped = evalDiffuse();
     } else {
-        vec3 diffuse = evalDiffuse();
-        vec3 ks = vec3(0);
-        vec3 spec = evalMicrofacets();
-        vec3 kd = 1.0 - ks;
-
-        vec3 light = spec;
-        mapped = vec3( 1.0f ) - exp(light * exposure);
+        mapped = evalMicrofacets();
     }
 
     out_color = vec4( pow( mapped, vec3( 1.0f / gamma ) ), 1.0 );
 
-    float ssao = texture(i_ssao, f_uvs).r;
-    out_color *= ssao;
-
+    //float ssao = texture(i_ssao, f_uvs).r;
+    //out_color *= ssao;
 }
