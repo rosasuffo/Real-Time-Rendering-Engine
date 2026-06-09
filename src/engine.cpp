@@ -313,6 +313,7 @@ void Engine::createRenderPasses ()
         m_runtime, 
         m_render_target_attachments.m_color_attachment, 
         m_render_target_attachments.m_position_depth_attachment, 
+		m_render_target_attachments.m_depth_attachment,
         m_render_target_attachments.m_normal_attachment, 
         m_render_target_attachments.m_material_attachment, 
         m_render_target_attachments.m_ssao_blur_attachment, 
@@ -437,7 +438,7 @@ void Engine::createAttachments()
     UtilsVK::createImage( *m_runtime.m_renderer->getDevice(), VK_FORMAT_R8_UNORM           , VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT        , width, height, m_render_target_attachments.m_ssao_attachment           );
     UtilsVK::createImage( *m_runtime.m_renderer->getDevice(), VK_FORMAT_R8_UNORM           , VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT        , width, height, m_render_target_attachments.m_ssao_blur_attachment      );
     UtilsVK::createImage(*m_runtime.m_renderer->getDevice(), VK_FORMAT_D32_SFLOAT_S8_UINT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-        1024, 1024, // resolucion de la textura de shadowmap, no tengo pk poner la res de la pantalla
+        2048, 2048, // resolucion de la textura de shadowmap, no tengo pk poner la res de la pantalla
         10,                  // numero de capas, seg�n el n�mero de luces soportado. una capa por luz
         1,               // nivel de resoluci�n. cada nivel es la mitad que el anterior
         IMAGE_BLOCK_2D_ARRAY, m_render_target_attachments.m_shadow_attachment);

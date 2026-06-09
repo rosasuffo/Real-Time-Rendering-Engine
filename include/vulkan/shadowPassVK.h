@@ -59,5 +59,7 @@ namespace MiniEngine
 
         const ImageBlock m_shadow_attachment;
 
+		uint32 m_width = 2048;
+		uint32 m_height = 2048;
     };
 };

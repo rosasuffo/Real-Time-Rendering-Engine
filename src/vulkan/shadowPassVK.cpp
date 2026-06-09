@@ -141,16 +141,15 @@ VkCommandBuffer ShadowPassVK::draw(const Frame& i_frame)
     VkCommandBufferBeginInfo begin_info{};
     begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
-    uint32 width = 1024, height = 1024;
+    //uint32 width = 2048, height = 2048;
     //renderer.getWindow().getWindowSize(width, height);
-    renderer.getWindow().getWindowSize(width, height);
 
     VkRenderPassBeginInfo render_pass_info{};
     render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     render_pass_info.renderPass = m_render_pass;
     render_pass_info.framebuffer = m_fbos[renderer.getWindow().getCurrentImageId()];
     render_pass_info.renderArea.offset = { 0, 0 };
-    render_pass_info.renderArea.extent = { width, height };
+    render_pass_info.renderArea.extent = { m_width, m_height };
 
     std::array<VkClearValue, 1> clear_values;
     clear_values[0].depthStencil = { 1.0f, 0 };
@@ -204,7 +203,7 @@ void ShadowPassVK::createFbo()
 {
     RendererVK& renderer = *m_runtime.m_renderer;
 
-    uint32_t width = 1024, height = 1024;
+    //uint32_t width = 2048, height = 2048;
     //renderer.getWindow().getWindowSize(width, height);
 
     for (size_t i = 0; i < m_fbos.size(); i++)
@@ -218,8 +217,8 @@ void ShadowPassVK::createFbo()
         framebuffer_create_info.renderPass = m_render_pass;
         framebuffer_create_info.attachmentCount = static_cast<uint32_t>(attachments.size());
         framebuffer_create_info.pAttachments = attachments.data();
-        framebuffer_create_info.width = width;
-        framebuffer_create_info.height = height;
+        framebuffer_create_info.width = m_width;
+        framebuffer_create_info.height = m_height;
         framebuffer_create_info.layers = 10;
         // Create the framebuffer
 
@@ -398,21 +397,21 @@ void ShadowPassVK::createPipelines()
     multisampling.flags = 0;
 
 
-    uint32 width = 1024, height = 1024;
+    //uint32 width = 2048, height = 2048;
     //renderer.getWindow().getWindowSize(width, height);
-    VkExtent2D extend{ width, height };
+    //VkExtent2D extend{ width, height };
 
     VkViewport viewport{};
     viewport.x = 0.0f;
     viewport.y = 0.0f;
-    viewport.width = (float)width;
-    viewport.height = (float)height;
+    viewport.width = (float)m_width;
+    viewport.height = (float)m_height;
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
 
     VkRect2D scissor{};
     scissor.offset = { 0, 0 };
-    scissor.extent = extend;
+    scissor.extent = { m_width, m_height };
 
     VkPipelineViewportStateCreateInfo viewport_state{};
     viewport_state.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;

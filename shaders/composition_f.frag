@@ -35,6 +35,7 @@ layout ( set = 0, binding = 3 ) uniform sampler2D i_normal;
 layout ( set = 0, binding = 4 ) uniform sampler2D i_material;
 layout ( set = 0, binding = 5 ) uniform sampler2D i_ssao;
 layout ( set = 0, binding = 6 ) uniform sampler2DArray i_shadowMap;
+layout ( set = 0, binding = 7 ) uniform sampler2D i_depth;
 
 
 layout(location = 0) out vec4 out_color;
@@ -42,6 +43,7 @@ layout(location = 0) out vec4 out_color;
 float evalVisibility(int id_light)
 {
     vec4 frag_pos = texture(i_position_and_depth,f_uvs);
+    vec4 depth = texture(i_depth, f_uvs);
 
     vec4 light_space_pos = per_frame_data.m_lights[ id_light ].m_view_projection * frag_pos; // Transform the fragment position to the light's clip space
 
@@ -60,9 +62,10 @@ float evalVisibility(int id_light)
     float shadow = texture(i_shadowMap, vec3(proj_coords.xy, id_light)).r;
   
     // Compare the depth of the fragment with the depth stored in the shadow map
-    float bias = 0.005; // Bias to prevent shadow acne
+    float bias = 0.006; // Bias to prevent shadow acne
 
-    return (proj_coords.z - bias) > shadow ? 0.0 : 1.0; // If the fragment is in shadow, return 0.0, otherwise return 1.0
+    return depth.y;
+    //return (proj_coords.z - bias) > shadow ? 0.0 : 1.0; // If the fragment is in shadow, return 0.0, otherwise return 1.0
 
 }
 
@@ -194,4 +197,5 @@ void main()
 
     //float ssao = texture(i_ssao, f_uvs).r;
     //out_color *= ssao;
+    out_color = evalVisibility(0).xxxx;
 }

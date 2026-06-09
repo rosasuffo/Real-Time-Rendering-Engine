@@ -15,6 +15,7 @@ namespace MiniEngine
                             const Runtime& i_runtime,
                             const ImageBlock& i_in_color_attachment,
                             const ImageBlock& i_in_position_depth_attachment,
+                            const ImageBlock& i_in_depth_attachment,
                             const ImageBlock& i_in_normal_attachment,
                             const ImageBlock& i_in_material_attachment,
                             const ImageBlock& i_in_ssaoblur_attachment,
@@ -58,6 +59,7 @@ namespace MiniEngine
 
         ImageBlock m_in_color_attachment;
         ImageBlock m_in_position_depth_attachment;
+        ImageBlock m_in_depth_attachment;
         ImageBlock m_in_normal_attachment;
         ImageBlock m_in_material_attachment;
         ImageBlock m_in_ssaoblur_attachment;
