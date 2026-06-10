@@ -35,37 +35,27 @@ layout ( set = 0, binding = 3 ) uniform sampler2D i_normal;
 layout ( set = 0, binding = 4 ) uniform sampler2D i_material;
 layout ( set = 0, binding = 5 ) uniform sampler2D i_ssao;
 layout ( set = 0, binding = 6 ) uniform sampler2DArray i_shadowMap;
-layout ( set = 0, binding = 7 ) uniform sampler2D i_depth;
 
 
 layout(location = 0) out vec4 out_color;
 
-float evalVisibility(int id_light)
+float evalVisibility(uint id_light)
 {
-    vec4 frag_pos = texture(i_position_and_depth,f_uvs);
-    vec4 depth = texture(i_depth, f_uvs);
+    vec3 frag_pos = texture(i_position_and_depth,f_uvs).xyz;
 
-    vec4 light_space_pos = per_frame_data.m_lights[ id_light ].m_view_projection * frag_pos; // Transform the fragment position to the light's clip space
+    vec4 light_space_pos = per_frame_data.m_lights[ id_light ].m_view_projection * vec4(frag_pos, 1.f);
 
     vec3 proj_coords = light_space_pos.xyz / light_space_pos.w; // Perspective divide
-    proj_coords = proj_coords * 0.5 + 0.5; // Transform to [0,1] range
-
-    // Check if the projected coordinates are within the shadow map
-    if (proj_coords.x < 0.0 || proj_coords.x > 1.0 || 
-        proj_coords.y < 0.0 || proj_coords.y > 1.0 ||
-        proj_coords.z < 0.0 || proj_coords.z > 1.0)
-    {
-        return 1.0;  // If the fragment is outside the shadow map, consider it fully lit
-    }
+    proj_coords.xy = proj_coords.xy * 0.5 + 0.5; // Transform to [0,1] range
 
     // Sample the shadow map
     float shadow = texture(i_shadowMap, vec3(proj_coords.xy, id_light)).r;
   
     // Compare the depth of the fragment with the depth stored in the shadow map
-    float bias = 0.006; // Bias to prevent shadow acne
+    float bias = 0.005; // Bias to prevent shadow acne
 
-    return depth.y;
-    //return (proj_coords.z - bias) > shadow ? 0.0 : 1.0; // If the fragment is in shadow, return 0.0, otherwise return 1.0
+    //return pow(shadow, 128.0);
+    return (proj_coords.z) > shadow ? 0.0 : 1.0; // If the fragment is in shadow, return 0.0, otherwise return 1.0
 
 }
 
@@ -77,7 +67,7 @@ vec3 evalDiffuse()
     vec3  shading = vec3( 0.0 );
 
 
-    for( int id_light = 0; id_light < per_frame_data.m_number_of_lights; id_light++ )
+    for( uint id_light = 0; id_light < per_frame_data.m_number_of_lights; id_light++ )
     {
         LightData light = per_frame_data.m_lights[ id_light ];
         uint light_type = uint( floor( light.m_light_pos.a ) );
@@ -127,7 +117,7 @@ vec3 evalMicrofacets(){
     vec4  albedo = texture( i_albedo  , f_uvs );
 
     vec3  shading      = vec3( 0.0 );
-    for(int i = 0; i <per_frame_data.m_number_of_lights; i++){
+    for(uint i = 0; i <per_frame_data.m_number_of_lights; i++){
         LightData light = per_frame_data.m_lights[i];
         uint light_type = uint( floor( light.m_light_pos.a ) );
 
@@ -197,5 +187,5 @@ void main()
 
     //float ssao = texture(i_ssao, f_uvs).r;
     //out_color *= ssao;
-    out_color = evalVisibility(0).xxxx;
+    //out_color = evalVisibility(0).xxxx;
 }

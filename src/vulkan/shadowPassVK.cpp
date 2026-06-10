@@ -170,6 +170,10 @@ VkCommandBuffer ShadowPassVK::draw(const Frame& i_frame)
         //UtilsVK::beginRegion(current_cmd, "Diffuse GBuffer Pass", Vector4f(0.0f, 0.0f, 1.0f, 1.0f));
 
         vkCmdBindPipeline(current_cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[mat_id].m_pipeline);
+        vkCmdSetDepthBias(current_cmd,
+            1.25f,
+            0.f,
+            2.5f);
         vkCmdBindDescriptorSets(current_cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[mat_id].m_pipeline_layouts, 0, 2, &m_pipelines[mat_id].m_descriptor_sets[renderer.getWindow().getCurrentImageId()].m_per_frame_descriptor, 0, nullptr);
 
         for (auto entity : m_entities_to_draw[mat_id])
@@ -209,7 +213,7 @@ void ShadowPassVK::createFbo()
     for (size_t i = 0; i < m_fbos.size(); i++)
     {
         std::array<VkImageView, 1> attachments;
-        attachments[0] = m_shadow_attachment.m_image_view;         // depth buffer
+        attachments[0] = m_shadow_attachment.m_image_view;         // shadow depth buffer
 
         VkFramebufferCreateInfo framebuffer_create_info = {};
         framebuffer_create_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -245,7 +249,7 @@ void ShadowPassVK::createRenderPass()
     attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
     attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    attachments[0].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    attachments[0].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL; // = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;;
 
     VkAttachmentReference depth_reference = {};
     depth_reference.attachment = 0;
@@ -267,18 +271,18 @@ void ShadowPassVK::createRenderPass()
 
     dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
     dependencies[0].dstSubpass = 0;
-    dependencies[0].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-    dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependencies[0].srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-    dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    dependencies[0].srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+    dependencies[0].dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+    dependencies[0].srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+    dependencies[0].dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
     dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
     dependencies[1].srcSubpass = 0;
     dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
-    dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-    dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    dependencies[1].srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+    dependencies[1].dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+    dependencies[1].srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    dependencies[1].dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
     dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
     VkRenderPassCreateInfo render_pass_info = {};
@@ -360,11 +364,21 @@ void ShadowPassVK::createPipelines()
     raster_info.polygonMode = VkPolygonMode::VK_POLYGON_MODE_FILL;
     raster_info.cullMode = VK_CULL_MODE_NONE;
     raster_info.frontFace = VK_FRONT_FACE_CLOCKWISE;
-    raster_info.depthBiasEnable = VK_FALSE;
+    raster_info.depthBiasEnable = VK_TRUE;
     raster_info.depthBiasConstantFactor = 0.f;
-    raster_info.depthBiasClamp = VK_FALSE;
+    raster_info.depthBiasClamp = 0.f;
     raster_info.depthBiasSlopeFactor = 0.f;
     raster_info.lineWidth = 1.f;
+
+	// Setting dynamic depth bias in the command buffer
+    std::vector<VkDynamicState> dynamic_states = {
+		VK_DYNAMIC_STATE_DEPTH_BIAS
+	};
+
+	VkPipelineDynamicStateCreateInfo dynamic_info{};
+	dynamic_info.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	dynamic_info.dynamicStateCount = static_cast<uint32_t>(dynamic_states.size());
+	dynamic_info.pDynamicStates = dynamic_states.data();
 
     VkPipelineColorBlendAttachmentState color_blend_attachment{};
     color_blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
@@ -455,7 +469,7 @@ void ShadowPassVK::createPipelines()
         pipeline_info.pMultisampleState = &multisampling;
         pipeline_info.pViewportState = &viewport_state;
         pipeline_info.pDepthStencilState = &depth_stencil;
-        pipeline_info.pDynamicState = VK_NULL_HANDLE;
+        pipeline_info.pDynamicState = &dynamic_info;
         pipeline_info.stageCount = pipeline.m_shader_stages.size();
         pipeline_info.pStages = pipeline.m_shader_stages.data();
         pipeline_info.flags = 0;
@@ -481,7 +495,7 @@ void ShadowPassVK::createDescriptorLayout()
     per_frame_binding.binding = 0;
     per_frame_binding.descriptorCount = 1;
     per_frame_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    per_frame_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_GEOMETRY_BIT;
+    per_frame_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT;
 
     VkDescriptorSetLayoutCreateInfo set_per_frame_info = {};
     set_per_frame_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -495,7 +509,7 @@ void ShadowPassVK::createDescriptorLayout()
     per_object_binding.binding = 0;
     per_object_binding.descriptorCount = 1;
     per_object_binding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    per_object_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+    per_object_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
     VkDescriptorSetLayoutCreateInfo set_per_object_info = {};
     set_per_object_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;

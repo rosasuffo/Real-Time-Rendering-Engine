@@ -359,7 +359,8 @@ void UtilsVK::createImage(const DeviceVK& i_device, VkFormat i_format, VkImageUs
     }
     if (i_usage_bits & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
     {
-        aspect_mask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+        //aspect_mask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+        aspect_mask = VK_IMAGE_ASPECT_DEPTH_BIT;
         image_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
     }
 
