@@ -4,12 +4,17 @@
 
 namespace MiniEngine
 {
+
     struct LightData
     {
         alignas( 16 ) Vector4f m_light_pos;
         alignas( 16 ) Vector4f m_radiance;
         alignas( 16 ) Vector4f m_attenuattion;
-		alignas( 16 ) Matrix4f m_view_projection;
+		//alignas( 16 ) Matrix4f m_view_projection;
+		alignas( 16 ) Vector4f m_cascades_split_depth;
+		alignas( 16 ) Matrix4f m_cascades_view_proyection[kMAX_NUMBER_CASCADES];
+        alignas( 4  ) uint32_t m_type;
+
     };
 
     struct PerFrameData
@@ -26,6 +31,9 @@ namespace MiniEngine
         //light info
         alignas( 16 ) LightData m_lights[ kMAX_NUMBER_LIGHTS ];
         alignas( 4  ) uint32_t  m_number_of_lights;
+
+        //shadowmap cascade count
+		alignas( 4  ) uint32_t m_cascades_count;
     };
 
     struct PerObjectData

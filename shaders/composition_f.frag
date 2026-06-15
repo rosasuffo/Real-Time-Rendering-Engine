@@ -12,7 +12,9 @@ struct LightData
     vec4 m_light_pos;
     vec4 m_radiance;
     vec4 m_attenuattion;
-    mat4 m_view_projection;
+    vec4 m_cascades_split_depth;
+    mat4 m_cascades_view_proyection[ 4 ];
+    uint m_type;
 };
 
 layout( std140, set = 0, binding = 0 ) uniform PerFrameData
@@ -27,6 +29,7 @@ layout( std140, set = 0, binding = 0 ) uniform PerFrameData
     vec4      m_clipping_planes;
     LightData m_lights[ 10 ];
     uint      m_number_of_lights;
+    uint      m_cascades_count;
 } per_frame_data;
 
 layout ( set = 0, binding = 1 ) uniform sampler2D i_albedo;
@@ -42,19 +45,31 @@ layout(location = 0) out vec4 out_color;
 float evalVisibility(uint id_light)
 {
     vec3 frag_pos = texture(i_position_and_depth,f_uvs).xyz;
+    float depth = abs(frag_pos.z);
 
-    vec4 light_space_pos = per_frame_data.m_lights[ id_light ].m_view_projection * vec4(frag_pos, 1.f);
+    uint cascade_idx = 0;
+    for(uint c = 0; c < per_frame_data.m_cascades_count; c++){
+        if(depth < per_frame_data.m_lights[id_light].m_cascades_split_depth[c]){
+            cascade_idx = c;
+            break;
+        }
+    }
+
+    //cascade_idx = 0;
+
+    vec4 light_space_pos = per_frame_data.m_lights[ id_light ].m_cascades_view_proyection[cascade_idx] * vec4(frag_pos, 1.f);
 
     vec3 proj_coords = light_space_pos.xyz / light_space_pos.w; // Perspective divide
     proj_coords.xy = proj_coords.xy * 0.5 + 0.5; // Transform to [0,1] range
 
     // Sample the shadow map
-    float shadow = texture(i_shadowMap, vec3(proj_coords.xy, id_light)).r;
+    float csm_idx = id_light * per_frame_data.m_cascades_count + cascade_idx;
+    float shadow = texture(i_shadowMap, vec3(proj_coords.xy, csm_idx)).r;
   
     // Compare the depth of the fragment with the depth stored in the shadow map
     float bias = 0.005; // Bias to prevent shadow acne
 
-    //return pow(shadow, 128.0);
+    //return shadow;
     return (proj_coords.z) > shadow ? 0.0 : 1.0; // If the fragment is in shadow, return 0.0, otherwise return 1.0
 
 }

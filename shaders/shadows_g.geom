@@ -1,8 +1,8 @@
 #version 460
 
 layout(triangles) in;
-// max_vertices = (numero de vertices de la primitiva (3)) * (numero de capas/luces (10))
-layout(triangle_strip, max_vertices = 30) out;
+// max_vertices = (numero de vertices de la primitiva (3)) * (numero de capas/luces (10) * (cascades (4)))
+layout(triangle_strip, max_vertices = 120) out;
 
 #extension GL_ARB_shader_draw_parameters : enable
 
@@ -17,7 +17,9 @@ struct LightData
     vec4 m_light_pos;
     vec4 m_radiance;
     vec4 m_attenuattion;
-    mat4 m_view_projection;
+    vec4 m_cascades_split_depth;
+    mat4 m_cascades_view_proyection[ 4 ];
+    uint m_type;
 };
 
 layout( std140, set = 0, binding = 0 ) uniform PerFrameData
@@ -32,22 +34,30 @@ layout( std140, set = 0, binding = 0 ) uniform PerFrameData
     vec4      m_clipping_planes;
     LightData m_lights[ 10 ];
     uint      m_number_of_lights;
+    uint      m_cascades_count;
 } per_frame_data;
 
 
 
 void main() {
-    // por cada una de las luces, cada una con su matriz de proyeccion
+    int MAX_CASCADES = 4;
+
     for (int i = 0; i < per_frame_data.m_number_of_lights; ++i) {
-       // se clonan los vertices q llegan del shader de vertices (g_position) y se proyectan usando la m_view_projection de cada luz
-       // la g_position esta en coordenadas del mundo y quiero pasarlo a coordenadas de vista desde la luz
-        mat4 light_viewproj = per_frame_data.m_lights[i].m_view_projection;
-        for(int v = 0; v < 3; v++){
-            gl_Layer = i;
-            gl_Position = light_viewproj * vec4(g_position[v],1.0);
-            //gl_Position = vec4(g_position[v],1.0);
-            EmitVertex();
+        
+        if(per_frame_data.m_lights[i].m_type != 2){ // if not ambient
+            //CASCADES
+            for(uint c = 0; c < per_frame_data.m_cascades_count; c++)
+            {
+                mat4 light_viewproj = per_frame_data.m_lights[i].m_cascades_view_proyection[c];
+
+                for(int v = 0; v < 3; v++)
+                {
+                    gl_Layer = i * MAX_CASCADES + int(c);
+                    gl_Position = light_viewproj * vec4(g_position[v],1.0);
+                    EmitVertex();
+                }
+                EndPrimitive();
+            }
         }
-        EndPrimitive();
     }
 }

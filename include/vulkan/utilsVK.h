@@ -49,5 +49,6 @@ namespace MiniEngine
             VkAccelerationStructureKHR& o_tlas, VkBuffer& o_buffer, VkDeviceMemory& o_memory);
 
         uint64_t get_device_address(VkDevice i_device, VkBuffer i_buffer);
+
     };
 };

@@ -61,5 +61,6 @@ namespace MiniEngine
 
 		uint32 m_width = 2048;
 		uint32 m_height = 2048;
+
     };
 };

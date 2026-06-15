@@ -367,6 +367,7 @@ void Engine::updateGlobalBuffers()
     perframe_data.m_inv_view_projection = glm::inverse( perframe_data.m_inv_view_projection );
     perframe_data.m_clipping_planes     = Vector4f( m_scene->getCamera().getNearPlane(), m_scene->getCamera().getFarPlane(), 0.0f, 0.0f );
     perframe_data.m_number_of_lights    = 0;
+    perframe_data.m_cascades_count      = 1;
 
     for( perframe_data.m_number_of_lights = 0; perframe_data.m_number_of_lights < m_scene->getLights().size() && perframe_data.m_number_of_lights < kMAX_NUMBER_LIGHTS; perframe_data.m_number_of_lights++ )
     {
@@ -374,11 +375,45 @@ void Engine::updateGlobalBuffers()
        
         auto light = m_scene->getLights()[ perframe_data.m_number_of_lights ];
 
+		perframe_data.m_lights[perframe_data.m_number_of_lights].m_type = static_cast<uint32_t>(light->m_data.m_type);
         perframe_data.m_lights[ perframe_data.m_number_of_lights ].m_light_pos    = Vector4f( light->m_data.m_position.x   , light->m_data.m_position.y   , light->m_data.m_position.z   , light->m_data.m_type );
         perframe_data.m_lights[ perframe_data.m_number_of_lights ].m_radiance     = Vector4f( light->m_data.m_radiance.x   , light->m_data.m_radiance.y   , light->m_data.m_radiance.z   , 0.0f                 );
         perframe_data.m_lights[ perframe_data.m_number_of_lights ].m_attenuattion = Vector4f( light->m_data.m_attenuation.x, light->m_data.m_attenuation.y, light->m_data.m_attenuation.z, 0.0f                 );
-        perframe_data.m_lights[perframe_data.m_number_of_lights].m_view_projection = Light::getLightSpaceMatrix(light, m_scene->getCamera());
 
+		if (light->m_data.m_type == Light::LightType::Ambient) continue; // we don't calculate shadowmaps for ambient lights
+
+        // CASCADES
+        float near_plane = m_scene->getCamera().getNearPlane();
+        float far_plane = m_scene->getCamera().getFarPlane();
+        float cascades_split_lambda = 0.95f;
+
+		float near_plane_new = near_plane;
+        for (uint32_t c = 0; c < perframe_data.m_cascades_count && c < kMAX_NUMBER_CASCADES; c++) {
+
+			/*float dist = far_plane - near_plane;
+            float p = (c + 1) / static_cast<float>(perframe_data.m_cascades_count);
+            float log = near_plane * std::pow(far_plane / near_plane, p);
+            float uniform = near_plane + dist * p;
+            float d = cascades_split_lambda * (log - uniform) + uniform;
+            float split_depth = (d - near_plane) / dist;
+
+			float far_plane_new = near_plane + split_depth * dist;
+            //float far_plane_new = split_depth;
+                        
+            perframe_data.m_lights[perframe_data.m_number_of_lights].m_cascades_split_depth[c] = far_plane_new;
+            perframe_data.m_lights[perframe_data.m_number_of_lights].m_cascades_view_proyection[c] = Light::getLightSpaceMatrix(light, near_plane_new, far_plane_new, m_scene->getCamera()); 
+            
+            near_plane_new = far_plane_new; */
+
+            float dist = far_plane - near_plane;
+			float split_depth = (c + 1) / static_cast<float>(perframe_data.m_cascades_count);
+			dist *= split_depth;
+
+            perframe_data.m_lights[perframe_data.m_number_of_lights].m_cascades_split_depth[c] = dist;
+            perframe_data.m_lights[perframe_data.m_number_of_lights].m_cascades_view_proyection[c] = Light::getLightSpaceMatrix(light, near_plane_new, dist, m_scene->getCamera());
+
+            near_plane_new = dist;
+        }
     }
 
 
@@ -438,7 +473,7 @@ void Engine::createAttachments()
     UtilsVK::createImage( *m_runtime.m_renderer->getDevice(), VK_FORMAT_R8_UNORM           , VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT        , width, height, m_render_target_attachments.m_ssao_blur_attachment      );
     UtilsVK::createImage(*m_runtime.m_renderer->getDevice(), VK_FORMAT_D32_SFLOAT_S8_UINT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
         2048, 2048,  // resolucion de la textura de shadowmap, no tengo pk poner la res de la pantalla
-        10,                  // numero de capas, segun el numero de luces soportado. una capa por luz
+        kMAX_NUMBER_LIGHTS * kMAX_NUMBER_CASCADES,                  // numero de capas, segun el numero de luces soportado. una capa por luz
         1,               // nivel de resoluci�n. cada nivel es la mitad que el anterior
         IMAGE_BLOCK_2D_ARRAY, m_render_target_attachments.m_shadow_attachment);
 
@@ -472,6 +507,7 @@ void Engine::destroyAttachments()
     UtilsVK::freeImageBlock( *m_runtime.m_renderer->getDevice(), m_render_target_attachments.m_depth_attachment          );
     UtilsVK::freeImageBlock( *m_runtime.m_renderer->getDevice(), m_render_target_attachments.m_ssao_attachment           );
     UtilsVK::freeImageBlock( *m_runtime.m_renderer->getDevice(), m_render_target_attachments.m_ssao_blur_attachment      );
+    UtilsVK::freeImageBlock( *m_runtime.m_renderer->getDevice(), m_render_target_attachments.m_shadow_attachment);
 }
 
 

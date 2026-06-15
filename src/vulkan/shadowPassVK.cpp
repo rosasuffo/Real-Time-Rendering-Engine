@@ -141,9 +141,6 @@ VkCommandBuffer ShadowPassVK::draw(const Frame& i_frame)
     VkCommandBufferBeginInfo begin_info{};
     begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
-    //uint32 width = 2048, height = 2048;
-    //renderer.getWindow().getWindowSize(width, height);
-
     VkRenderPassBeginInfo render_pass_info{};
     render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     render_pass_info.renderPass = m_render_pass;
@@ -167,13 +164,9 @@ VkCommandBuffer ShadowPassVK::draw(const Frame& i_frame)
 
     for (uint32_t mat_id = static_cast<uint32_t>(Material::TMaterial::Diffuse); mat_id < static_cast<uint32_t>(m_pipelines.size()); mat_id++)
     {
-        //UtilsVK::beginRegion(current_cmd, "Diffuse GBuffer Pass", Vector4f(0.0f, 0.0f, 1.0f, 1.0f));
-
         vkCmdBindPipeline(current_cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[mat_id].m_pipeline);
-        vkCmdSetDepthBias(current_cmd,
-            1.25f,
-            0.f,
-            2.5f);
+        // set depth bias in command buffer
+        vkCmdSetDepthBias(current_cmd,1.25f,0.f,2.5f);
         vkCmdBindDescriptorSets(current_cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[mat_id].m_pipeline_layouts, 0, 2, &m_pipelines[mat_id].m_descriptor_sets[renderer.getWindow().getCurrentImageId()].m_per_frame_descriptor, 0, nullptr);
 
         for (auto entity : m_entities_to_draw[mat_id])
@@ -207,9 +200,6 @@ void ShadowPassVK::createFbo()
 {
     RendererVK& renderer = *m_runtime.m_renderer;
 
-    //uint32_t width = 2048, height = 2048;
-    //renderer.getWindow().getWindowSize(width, height);
-
     for (size_t i = 0; i < m_fbos.size(); i++)
     {
         std::array<VkImageView, 1> attachments;
@@ -223,7 +213,7 @@ void ShadowPassVK::createFbo()
         framebuffer_create_info.pAttachments = attachments.data();
         framebuffer_create_info.width = m_width;
         framebuffer_create_info.height = m_height;
-        framebuffer_create_info.layers = 10;
+        framebuffer_create_info.layers = kMAX_NUMBER_LIGHTS * kMAX_NUMBER_CASCADES;
         // Create the framebuffer
 
         if (vkCreateFramebuffer(renderer.getDevice()->getLogicalDevice(), &framebuffer_create_info, nullptr, &m_fbos[i]))
@@ -409,11 +399,6 @@ void ShadowPassVK::createPipelines()
     multisampling.sampleShadingEnable = VK_FALSE;
     multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
     multisampling.flags = 0;
-
-
-    //uint32 width = 2048, height = 2048;
-    //renderer.getWindow().getWindowSize(width, height);
-    //VkExtent2D extend{ width, height };
 
     VkViewport viewport{};
     viewport.x = 0.0f;
