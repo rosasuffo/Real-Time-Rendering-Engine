@@ -235,6 +235,81 @@ void DeviceVK::createDevice()
     }
 #endif 
 
+    // ----- NUEVO ------
+    VkPhysicalDeviceRayTracingPipelineFeaturesKHR rayTracingPipelineFeatures = {};
+    VkPhysicalDeviceAccelerationStructureFeaturesKHR accelerationStructureFeatures = {};
+    VkPhysicalDeviceBufferDeviceAddressFeaturesKHR bufferDeviceAddressFeatures = {};
+    VkPhysicalDeviceDescriptorIndexingFeaturesEXT descriptorIndexingFeatures = {};
+    VkPhysicalDeviceRayQueryFeaturesKHR rayQueryFeatures = {};
+
+    // Start chaining from the last element so we preserve order
+    void** pNextHead = &m_physical_device_features2.pNext;
+
+    if (std::find(m_supported_extensions.begin(), m_supported_extensions.end(),
+        VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME) != m_supported_extensions.end())
+    {
+        m_extensions.push_back(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
+
+        accelerationStructureFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
+        accelerationStructureFeatures.pNext = nullptr;
+        accelerationStructureFeatures.accelerationStructure = VK_TRUE;
+
+        *pNextHead = &accelerationStructureFeatures;
+        pNextHead = &accelerationStructureFeatures.pNext;
+    }
+    if (std::find(m_supported_extensions.begin(), m_supported_extensions.end(),
+        VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME) != m_supported_extensions.end())
+    {
+        m_extensions.push_back(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
+
+        rayTracingPipelineFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
+        rayTracingPipelineFeatures.pNext = nullptr;
+
+        *pNextHead = &rayTracingPipelineFeatures;
+        pNextHead = &rayTracingPipelineFeatures.pNext;
+    }
+    if (std::find(m_supported_extensions.begin(), m_supported_extensions.end(),
+        VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME) != m_supported_extensions.end())
+    {
+        m_extensions.push_back(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
+
+        bufferDeviceAddressFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_KHR;
+        bufferDeviceAddressFeatures.pNext = nullptr;
+        bufferDeviceAddressFeatures.bufferDeviceAddress = VK_TRUE;
+
+        *pNextHead = &bufferDeviceAddressFeatures;
+        pNextHead = &bufferDeviceAddressFeatures.pNext;
+    }
+    if (std::find(m_supported_extensions.begin(), m_supported_extensions.end(),
+        VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME) != m_supported_extensions.end())
+    {
+        m_extensions.push_back(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
+    }
+    if (std::find(m_supported_extensions.begin(), m_supported_extensions.end(),
+        VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME) != m_supported_extensions.end())
+    {
+        m_extensions.push_back(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
+
+        descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
+        descriptorIndexingFeatures.pNext = nullptr;
+
+        *pNextHead = &descriptorIndexingFeatures;
+        pNextHead = &descriptorIndexingFeatures.pNext;
+    }
+    if (std::find(m_supported_extensions.begin(), m_supported_extensions.end(), VK_KHR_RAY_QUERY_EXTENSION_NAME) !=
+        m_supported_extensions.end())
+    {
+        m_extensions.push_back(VK_KHR_RAY_QUERY_EXTENSION_NAME);
+
+        rayQueryFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR;
+        rayQueryFeatures.pNext = nullptr;
+        rayQueryFeatures.rayQuery = VK_TRUE;
+
+        *pNextHead = &rayQueryFeatures;
+        pNextHead = &rayQueryFeatures.pNext;
+    }
+	// ----- FIN NUEVO ------
+
     if (m_extensions.size() > 0)
     {
         for (const char* enabled_extension : m_extensions)

@@ -83,7 +83,8 @@ bool RendererVK::initialize()
     createInstance                  ();
     m_window->createSurface         ();
     m_device->createPhysicalDevice  ();
-    m_device->createDevice          ();
+    m_device->createDevice          (); // se habilitan las extensiones de RTX
+	loadExtensions(m_device->getLogicalDevice(), m_instance); // resolución de direcciones de memoria para extensiones de RTX
     m_window->createSwapChain       ();
     m_device->createCommandPool     (); 
 
