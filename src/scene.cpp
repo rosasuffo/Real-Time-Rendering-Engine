@@ -178,3 +178,13 @@ std::shared_ptr<Scene> Scene::loadScene( const Runtime& i_runtime, const std::st
 
      return scene;
 }
+
+std::vector<Matrix4f> Scene::getTransforms() const
+{
+    std::vector<Matrix4f> transforms;
+    for( auto entity : m_entities )
+    {
+        transforms.push_back( entity->getTransform().getTransform() );
+    }
+    return transforms;
+}

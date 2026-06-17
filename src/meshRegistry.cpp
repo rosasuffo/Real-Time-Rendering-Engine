@@ -112,6 +112,16 @@ std::shared_ptr<MeshVK> MeshRegistry::loadMesh( const std::string& i_path )
     return new_mesh;
 }
 
+std::vector<VkAccelerationStructureKHR> MeshRegistry::getMeshesBLAS()
+{
+    std::vector<VkAccelerationStructureKHR> blases;
+    for( auto mesh_block : m_meshes )
+    {
+        blases.push_back( mesh_block.second->getBLAS() );
+    }
+    return blases;
+}
+
 
 MeshRegistry::MeshRegistry( const Runtime& i_runtime ) :
     m_runtime( i_runtime ),

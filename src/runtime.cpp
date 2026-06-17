@@ -3,6 +3,8 @@
 #include "vulkan/deviceVK.h"
 #include "vulkan/utilsVK.h"
 #include "frame.h"
+#include "meshRegistry.h" 
+#include "scene.h"
 
 using namespace MiniEngine;
 
@@ -22,7 +24,14 @@ void Runtime::createResources()
         }
 
     }
-    
+
+    UtilsVK::createTLAS(
+        *m_renderer->getDevice(),
+        m_scene->getTransforms(),// array de matrices de transformacion de cada una de las mallas
+        m_mesh_registry->getMeshesBLAS(),// array de vkAccellerationStructures de las mallas
+        m_tlas,
+        m_tlas_buffer,
+        m_tlas_memory);
 }
 
 

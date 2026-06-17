@@ -8,6 +8,7 @@ namespace MiniEngine
     class ShaderRegistry;
     class Engine;
     class RendererVK;
+	class Scene;
 
     struct Runtime
     {
@@ -15,6 +16,7 @@ namespace MiniEngine
         std::unique_ptr<ShaderRegistry> m_shader_registry;
         std::unique_ptr<MeshRegistry>   m_mesh_registry;
         
+		Scene* m_scene;
 
         inline const std::array<VkBuffer, kMAX_NUMBER_OF_FRAMES> getPerFrameBuffer() const
         {
@@ -41,6 +43,10 @@ namespace MiniEngine
 
         std::array<VkBuffer       , kMAX_NUMBER_OF_FRAMES> m_per_object_buffer = { VK_NULL_HANDLE, VK_NULL_HANDLE, VK_NULL_HANDLE };
         std::array<VkDeviceMemory, kMAX_NUMBER_OF_FRAMES> m_per_object_buffer_memory;
+
+		VkBuffer m_tlas_buffer;
+		VkDeviceMemory m_tlas_memory;
+        VkAccelerationStructureKHR m_tlas;
 
         friend class Engine;
     };

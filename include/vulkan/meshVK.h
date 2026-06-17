@@ -17,6 +17,7 @@ namespace MiniEngine
         void shutdown();
 
         void draw( VkCommandBuffer& i_command_buffer, const uint32_t i_instance_id );
+		VkAccelerationStructureKHR getBLAS() const { return m_blas; }
 
     private:
         MeshVK( const MeshVK& ) = delete;

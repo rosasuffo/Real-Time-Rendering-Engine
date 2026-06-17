@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common.h"
+#include <vector>
 
 namespace MiniEngine
 {
@@ -18,6 +19,8 @@ namespace MiniEngine
         void shutdown();
 
         std::shared_ptr<MeshVK> loadMesh( const std::string& i_path );
+
+        std::vector<VkAccelerationStructureKHR> getMeshesBLAS();
 
 
     private:

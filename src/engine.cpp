@@ -188,6 +188,7 @@ void Engine::shutdown()
 void Engine::loadScene( const std::string& i_path )
 {
     m_scene = Scene::loadScene( m_runtime, i_path );
+    m_runtime.m_scene = m_scene.get();
 
     assert( m_scene );
 

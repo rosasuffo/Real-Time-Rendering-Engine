@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common.h"
+#include <transform.h>
  
 namespace MiniEngine
 {
@@ -26,6 +27,8 @@ namespace MiniEngine
 
         static std::shared_ptr<Scene> loadScene( const Runtime& i_runtime, const std::string& i_path );
     
+		Scene& get() { return *this; }
+
         /// Return a pointer to the scene's camera
         const Camera& getCamera() const 
         { 
@@ -40,6 +43,8 @@ namespace MiniEngine
         {
             return m_entities; 
         }
+
+        std::vector<Matrix4f> getTransforms() const;
 
         const std::vector<LightPtr>& getLights() const
         {
