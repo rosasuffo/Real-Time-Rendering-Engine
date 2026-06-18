@@ -429,52 +429,61 @@ void CompositionPassVK::createDescriptorLayout()
     std::array<VkDescriptorSetLayoutBinding, 8> layout_bindings;
 
     ////// PER FRAME
+
+	// Binding 0: Uniform buffer for per-frame data
     layout_bindings[ 0 ] = {};
     layout_bindings[ 0 ].binding                      = 0;
     layout_bindings[ 0 ].descriptorCount              = 1;
     layout_bindings[ 0 ].descriptorType               = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     layout_bindings[ 0 ].stageFlags                   = VK_SHADER_STAGE_FRAGMENT_BIT;
 
+	// Binding 1: Combined image sampler for color attachment
     layout_bindings[ 1 ] = {};
     layout_bindings[ 1 ].binding                      = 1;
     layout_bindings[ 1 ].descriptorCount              = 1;
     layout_bindings[ 1 ].descriptorType               = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     layout_bindings[ 1 ].stageFlags                   = VK_SHADER_STAGE_FRAGMENT_BIT;
 
+	// Binding 2: Combined image sampler for position-depth attachment
     layout_bindings[ 2 ] = {};
     layout_bindings[ 2 ].binding                      = 2;
     layout_bindings[ 2 ].descriptorCount              = 1;
     layout_bindings[ 2 ].descriptorType               = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     layout_bindings[ 2 ].stageFlags                   = VK_SHADER_STAGE_FRAGMENT_BIT;
 
+	// Binding 3: Combined image sampler for normal attachment
     layout_bindings[ 3 ] = {};
     layout_bindings[ 3 ].binding                      = 3;
     layout_bindings[ 3 ].descriptorCount              = 1;
     layout_bindings[ 3 ].descriptorType               = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     layout_bindings[ 3 ].stageFlags                   = VK_SHADER_STAGE_FRAGMENT_BIT;
 
+	// Binding 4: Combined image sampler for material attachment
     layout_bindings[ 4 ] = {};
     layout_bindings[ 4 ].binding                      = 4;
     layout_bindings[ 4 ].descriptorCount              = 1;
     layout_bindings[ 4 ].descriptorType               = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     layout_bindings[ 4 ].stageFlags                   = VK_SHADER_STAGE_FRAGMENT_BIT;
 
+	// Binding 5: Combined image sampler for SSAO blur attachment
     layout_bindings[ 5 ] = {};
     layout_bindings[ 5 ].binding = 5;
     layout_bindings[ 5 ].descriptorCount = 1;
     layout_bindings[ 5 ].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     layout_bindings[ 5 ].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
+	// Binding 6: Combined image sampler for shadow attachment
     layout_bindings[ 6 ] = {};
     layout_bindings[ 6 ].binding = 6;
     layout_bindings[ 6 ].descriptorCount = 1;
     layout_bindings[ 6 ].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     layout_bindings[ 6 ].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
+	// Binding 7: Acceleration structure for ray tracing
     layout_bindings[ 7 ] = {};
     layout_bindings[ 7 ].binding = 7;
     layout_bindings[ 7 ].descriptorCount = 1;
-    layout_bindings[ 7 ].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    layout_bindings[ 7 ].descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
     layout_bindings[ 7 ].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
 
@@ -498,7 +507,8 @@ void CompositionPassVK::createDescriptors()
     std::vector<VkDescriptorPoolSize> sizes =
     {
         { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER        , 10 },
-        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 30 }
+        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 30 },
+		{ VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 10 }
     };
 
     VkDescriptorPoolCreateInfo pool_info = {};
@@ -553,13 +563,18 @@ void CompositionPassVK::createDescriptors()
         image_infos[ 4 ].imageView   = m_in_ssaoblur_attachment.m_image_view;
         image_infos[ 4 ].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-        image_infos[5].sampler      = m_in_shadow_attachment.m_sampler;
-        image_infos[5].imageView    = m_in_shadow_attachment.m_image_view;
-        image_infos[5].imageLayout  = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        image_infos[ 5 ].sampler      = m_in_shadow_attachment.m_sampler;
+        image_infos[ 5 ].imageView    = m_in_shadow_attachment.m_image_view;
+        image_infos[ 5 ].imageLayout  = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
+		VkWriteDescriptorSetAccelerationStructureKHR writeDescriptorSetAccelerationStructure{};
+		writeDescriptorSetAccelerationStructure.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
+		writeDescriptorSetAccelerationStructure.accelerationStructureCount = 1;
+        writeDescriptorSetAccelerationStructure.pAccelerationStructures = m_runtime.getTLAS();
 
-        std::array<VkWriteDescriptorSet, 7> set_write;
+        std::array<VkWriteDescriptorSet, 8> set_write;
 
+		// per frame buffer
         set_write[ 0 ]                   = {};
         set_write[ 0 ].sType             = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         set_write[ 0 ].pNext             = nullptr;
@@ -570,6 +585,7 @@ void CompositionPassVK::createDescriptors()
         set_write[ 0 ].pImageInfo        = nullptr;
         set_write[ 0 ].pBufferInfo       = &binfo;
 
+        // color attachment
         set_write[ 1 ]                   = {};
         set_write[ 1 ].sType             = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         set_write[ 1 ].pNext             = nullptr;
@@ -579,6 +595,7 @@ void CompositionPassVK::createDescriptors()
         set_write[ 1 ].descriptorType    = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         set_write[ 1 ].pImageInfo        = &image_infos[ 0 ];
 
+		// position depth attachment
         set_write[ 2 ]                   = {};
         set_write[ 2 ].sType             = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         set_write[ 2 ].pNext             = nullptr;
@@ -588,6 +605,7 @@ void CompositionPassVK::createDescriptors()
         set_write[ 2 ].descriptorType    = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         set_write[ 2 ].pImageInfo        = &image_infos[ 1 ];
 
+		// normal attachment
         set_write[ 3 ]                   = {};
         set_write[ 3 ].sType             = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         set_write[ 3 ].pNext             = nullptr;
@@ -597,6 +615,7 @@ void CompositionPassVK::createDescriptors()
         set_write[ 3 ].descriptorType    = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         set_write[ 3 ].pImageInfo        = &image_infos[ 2 ];
 
+		// material attachment
         set_write[ 4 ]                   = {};
         set_write[ 4 ].sType             = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         set_write[ 4 ].pNext             = nullptr;
@@ -606,6 +625,7 @@ void CompositionPassVK::createDescriptors()
         set_write[ 4 ].descriptorType    = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         set_write[ 4 ].pImageInfo        = &image_infos[ 3 ];
 
+		// ssao blur attachment
         set_write[ 5 ] = {};
         set_write[ 5 ].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         set_write[ 5 ].pNext = nullptr;
@@ -615,6 +635,7 @@ void CompositionPassVK::createDescriptors()
         set_write[ 5 ].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         set_write[ 5 ].pImageInfo = &image_infos[4];
 
+		// shadow attachment
         set_write[ 6 ] = {};
         set_write[ 6 ].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         set_write[ 6 ].pNext = nullptr;
@@ -623,6 +644,15 @@ void CompositionPassVK::createDescriptors()
         set_write[ 6 ].descriptorCount = 1;
         set_write[ 6 ].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         set_write[ 6 ].pImageInfo = &image_infos[5];
+
+		// acceleration structure
+        set_write[ 7 ] = {};
+        set_write[ 7 ].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        set_write[ 7 ].pNext = &writeDescriptorSetAccelerationStructure;
+        set_write[ 7 ].dstBinding = 7;
+        set_write[ 7 ].dstSet = m_descriptor_sets[i].m_textures_descriptor;
+        set_write[ 7 ].descriptorCount = 1;
+        set_write[ 7 ].descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
 
 
         vkUpdateDescriptorSets( m_runtime.m_renderer->getDevice()->getLogicalDevice(), set_write.size(), set_write.data(), 0, nullptr );

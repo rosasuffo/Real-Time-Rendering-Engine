@@ -28,6 +28,8 @@ namespace MiniEngine
             return m_per_object_buffer;
         }
 
+        inline const VkAccelerationStructureKHR* getTLAS() const { return &m_tlas; }
+
     private:
         explicit Runtime() = default;
         ~Runtime() = default;

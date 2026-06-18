@@ -5,6 +5,7 @@
 #include "frame.h"
 #include "meshRegistry.h" 
 #include "scene.h"
+#include "vulkan/extensionsVK.h"
 
 using namespace MiniEngine;
 
@@ -55,4 +56,11 @@ void Runtime::freeResources()
             m_per_object_buffer[ id ] = VK_NULL_HANDLE;
         }
     }
+
+    if( m_tlas )
+    {
+        vkDestroyAccelerationStructure( m_renderer->getDevice()->getLogicalDevice(), m_tlas, nullptr );
+        vkDestroyBuffer( m_renderer->getDevice()->getLogicalDevice(), m_tlas_buffer, nullptr );
+        vkFreeMemory   ( m_renderer->getDevice()->getLogicalDevice(), m_tlas_memory, nullptr );
+	}
 }
