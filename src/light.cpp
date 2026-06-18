@@ -31,7 +31,7 @@ std::shared_ptr<Light> Light::createLight(const Runtime& i_runtime, const pugi::
 
         if (node)
         {
-            light->m_data.m_attenuation = normalize(toVector3f(node.attribute("value").value()));
+            light->m_data.m_attenuation = normalize(toVector3f(node.attribute("value").value())); 
         }
 
         node = emitter.find_child_by_attribute("name", "position");

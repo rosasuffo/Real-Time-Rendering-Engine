@@ -89,6 +89,7 @@ Matrix4f Camera::getViewProjection()
     {
         m_camera_data.m_view_projection = getView() * getProjection();
     }
+    m_camera_data.m_view_projection = getView() * getProjection();
 
     return m_camera_data.m_view_projection;
 }

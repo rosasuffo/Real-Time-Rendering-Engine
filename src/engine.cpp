@@ -365,7 +365,7 @@ void Engine::updateGlobalBuffers()
     perframe_data.m_view_projection     = const_cast< Camera& >( m_scene->getCamera() ).getViewProjection();
     perframe_data.m_inv_projection      = glm::inverse( perframe_data.m_projection          );
     perframe_data.m_inv_view            = glm::inverse( perframe_data.m_view                );
-    perframe_data.m_inv_view_projection = glm::inverse( perframe_data.m_inv_view_projection );
+    perframe_data.m_inv_view_projection = glm::inverse( perframe_data.m_view_projection );
     perframe_data.m_clipping_planes     = Vector4f( m_scene->getCamera().getNearPlane(), m_scene->getCamera().getFarPlane(), 0.0f, 0.0f );
     perframe_data.m_number_of_lights    = 0;
     perframe_data.m_cascades_count      = 1;
