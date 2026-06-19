@@ -103,8 +103,12 @@ struct Attachments
     ImageBlock m_ssao_attachment;
     ImageBlock m_ssao_blur_attachment;
 
-    // NUEVO: SHADOWS
+    // SHADOWS
     ImageBlock m_shadow_attachment;
+
+    // RTX
+	ImageBlock m_rtx_attachment;
+	ImageBlock m_rtx_blur_attachment;
 };
 
 };

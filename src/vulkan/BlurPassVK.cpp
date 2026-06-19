@@ -1,6 +1,6 @@
 #include "common.h"
 #include "vulkan/utilsVK.h"
-#include "vulkan/SSAOBlurPassVK.h"
+#include "vulkan/BlurPassVK.h"
 #include "vulkan/rendererVK.h"
 #include "vulkan/deviceVK.h"
 #include "vulkan/windowVK.h"
@@ -15,12 +15,12 @@
 using namespace MiniEngine;
 
 
-SSAOBlurPassVK::SSAOBlurPassVK(
+BlurPassVK::BlurPassVK(
     const Runtime& i_runtime,
-    const ImageBlock& i_in_ssao_attachment,
+    const ImageBlock& i_in_attachment,
     const ImageBlock& i_blur_texture) :
     RenderPassVK(i_runtime),
-    m_in_ssao_attachment(i_in_ssao_attachment),
+    m_in_attachment(i_in_attachment),
     m_blur_texture(i_blur_texture)
 {
     for( auto cmd : m_command_buffer )
@@ -30,12 +30,12 @@ SSAOBlurPassVK::SSAOBlurPassVK(
 }               
 
 
-SSAOBlurPassVK::~SSAOBlurPassVK()
+BlurPassVK::~BlurPassVK()
 {
 }
 
 
-bool SSAOBlurPassVK::initialize()
+bool BlurPassVK::initialize()
 {
     RendererVK& renderer = *m_runtime.m_renderer;
 
@@ -46,8 +46,8 @@ bool SSAOBlurPassVK::initialize()
 
     //SHADER STAGES
     {
-        VkShaderModule vert_module     = m_runtime.m_shader_registry->loadShader( "./shaders/SSAO_v.spv"       , VK_SHADER_STAGE_VERTEX_BIT   );
-        VkShaderModule frag_module     = m_runtime.m_shader_registry->loadShader( "./shaders/SSAOblur_f.spv"    , VK_SHADER_STAGE_FRAGMENT_BIT );
+        VkShaderModule vert_module     = m_runtime.m_shader_registry->loadShader( "./shaders/blur_v.spv"       , VK_SHADER_STAGE_VERTEX_BIT   );
+        VkShaderModule frag_module     = m_runtime.m_shader_registry->loadShader( "./shaders/blur_f.spv"    , VK_SHADER_STAGE_FRAGMENT_BIT );
 
         { // difuse
             VkPipelineShaderStageCreateInfo vert_shader{};
@@ -84,7 +84,7 @@ bool SSAOBlurPassVK::initialize()
 }
 
 
-void SSAOBlurPassVK::shutdown()
+void BlurPassVK::shutdown()
 {
     RendererVK& renderer = *m_runtime.m_renderer;
 
@@ -107,7 +107,7 @@ void SSAOBlurPassVK::shutdown()
 }
 
 
-VkCommandBuffer SSAOBlurPassVK::draw( const Frame& i_frame)
+VkCommandBuffer BlurPassVK::draw( const Frame& i_frame)
 {
     RendererVK& renderer = *m_runtime.m_renderer;
 
@@ -163,7 +163,7 @@ VkCommandBuffer SSAOBlurPassVK::draw( const Frame& i_frame)
 }
 
 
-void SSAOBlurPassVK::createFbo()
+void BlurPassVK::createFbo()
 {
     RendererVK& renderer = *m_runtime.m_renderer;
 
@@ -195,7 +195,7 @@ void SSAOBlurPassVK::createFbo()
 
 
 
-void SSAOBlurPassVK::createRenderPass()
+void BlurPassVK::createRenderPass()
 {
     RendererVK& renderer = *m_runtime.m_renderer;
 
@@ -254,7 +254,7 @@ void SSAOBlurPassVK::createRenderPass()
 }
 
 
-void SSAOBlurPassVK::createPipelines()
+void BlurPassVK::createPipelines()
 {
     RendererVK& renderer = *m_runtime.m_renderer;
     
@@ -416,20 +416,20 @@ void SSAOBlurPassVK::createPipelines()
 }
 
 
-void SSAOBlurPassVK::createDescriptorLayout()
+void BlurPassVK::createDescriptorLayout()
 {
     // SSAO
-    std::array<VkDescriptorSetLayoutBinding, 1> ssao_bindings = {};
-    ssao_bindings[ 0 ].binding = 0;
-    ssao_bindings[ 0 ].descriptorCount = 1;
-    ssao_bindings[ 0 ].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    ssao_bindings[ 0 ].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    std::array<VkDescriptorSetLayoutBinding, 1> blur_bindings = {};
+    blur_bindings[ 0 ].binding = 0;
+    blur_bindings[ 0 ].descriptorCount = 1;
+    blur_bindings[ 0 ].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    blur_bindings[ 0 ].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
     VkDescriptorSetLayoutCreateInfo set_ssao_info = {};
     set_ssao_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     set_ssao_info.pNext = nullptr;
-    set_ssao_info.bindingCount = ssao_bindings.size();
-    set_ssao_info.pBindings = ssao_bindings.data();
+    set_ssao_info.bindingCount = blur_bindings.size();
+    set_ssao_info.pBindings = blur_bindings.data();
 
     if (VK_SUCCESS != vkCreateDescriptorSetLayout(m_runtime.m_renderer->getDevice()->getLogicalDevice(), &set_ssao_info, nullptr, &m_descriptor_set_layout[ 0 ]))
     {
@@ -438,7 +438,7 @@ void SSAOBlurPassVK::createDescriptorLayout()
 }
 
 
-void SSAOBlurPassVK::createDescriptors()
+void BlurPassVK::createDescriptors()
 {
     std::vector<VkDescriptorPoolSize> sizes =
     {
@@ -462,18 +462,18 @@ void SSAOBlurPassVK::createDescriptors()
     {
         //ssao
         //allocate one descriptor set for each frame
-        VkDescriptorSetAllocateInfo alloc_ssao_info = {};
-        alloc_ssao_info.pNext = nullptr;
-        alloc_ssao_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-        alloc_ssao_info.descriptorPool = m_descriptor_pool;
-        alloc_ssao_info.descriptorSetCount = 1;
-        alloc_ssao_info.pSetLayouts = &m_descriptor_set_layout[0];
-        vkAllocateDescriptorSets(m_runtime.m_renderer->getDevice()->getLogicalDevice(), &alloc_ssao_info, &m_descriptor_sets[id].m_textures_descriptor);
+        VkDescriptorSetAllocateInfo alloc_blur_info = {};
+        alloc_blur_info.pNext = nullptr;
+        alloc_blur_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        alloc_blur_info.descriptorPool = m_descriptor_pool;
+        alloc_blur_info.descriptorSetCount = 1;
+        alloc_blur_info.pSetLayouts = &m_descriptor_set_layout[0];
+        vkAllocateDescriptorSets(m_runtime.m_renderer->getDevice()->getLogicalDevice(), &alloc_blur_info, &m_descriptor_sets[id].m_textures_descriptor);
 
-        VkDescriptorImageInfo ssao_info;
-        ssao_info.sampler = m_in_ssao_attachment.m_sampler;
-        ssao_info.imageView = m_in_ssao_attachment.m_image_view;
-        ssao_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        VkDescriptorImageInfo blur_info;
+        blur_info.sampler = m_in_attachment.m_sampler;
+        blur_info.imageView = m_in_attachment.m_image_view;
+        blur_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
         std::array<VkWriteDescriptorSet, 1> set_write;
 
@@ -484,7 +484,7 @@ void SSAOBlurPassVK::createDescriptors()
         set_write[0].dstBinding = 0;
         set_write[0].descriptorCount = 1;
         set_write[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        set_write[0].pImageInfo = &ssao_info;
+        set_write[0].pImageInfo = &blur_info;
 
         vkUpdateDescriptorSets(
             m_runtime.m_renderer->getDevice()->getLogicalDevice(),

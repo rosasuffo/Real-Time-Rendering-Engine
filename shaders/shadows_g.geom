@@ -19,7 +19,6 @@ struct LightData
     vec4 m_attenuattion;
     vec4 m_cascades_split_depth;
     mat4 m_cascades_view_proyection[ 4 ];
-    uint m_type;
 };
 
 layout( std140, set = 0, binding = 0 ) uniform PerFrameData
@@ -43,8 +42,9 @@ void main() {
     int MAX_CASCADES = 4;
 
     for (int i = 0; i < per_frame_data.m_number_of_lights; ++i) {
-        
-        if(per_frame_data.m_lights[i].m_type != 2){ // if not ambient
+        uint light_type = uint( floor( per_frame_data.m_lights[i].m_light_pos.a ) );
+
+        if(light_type != 2){ // if not ambient
             //CASCADES
             for(uint c = 0; c < per_frame_data.m_cascades_count; c++)
             {

@@ -8,15 +8,15 @@ namespace MiniEngine
     class MeshVK;
     typedef std::shared_ptr<MeshVK> MeshVKPtr;
 
-    class SSAOBlurPassVK final : public RenderPassVK
+    class BlurPassVK final : public RenderPassVK
     {
     public:
-        SSAOBlurPassVK(
+        BlurPassVK(
             const Runtime& i_runtime, 
-            const ImageBlock& i_in_ssao_attachment,
+            const ImageBlock& i_in_attachment,
             const ImageBlock& i_blur_texture);
 
-        virtual ~SSAOBlurPassVK();
+        virtual ~BlurPassVK();
 
         bool            initialize() override;
         void            shutdown  () override;
@@ -24,8 +24,8 @@ namespace MiniEngine
 
 
     private:
-        SSAOBlurPassVK( const SSAOBlurPassVK& ) = delete;
-        SSAOBlurPassVK& operator=(const SSAOBlurPassVK& ) = delete;
+        BlurPassVK( const BlurPassVK& ) = delete;
+        BlurPassVK& operator=(const BlurPassVK& ) = delete;
 
         void createFbo             ();
         void createRenderPass      ();
@@ -51,7 +51,7 @@ namespace MiniEngine
 
         MeshVKPtr m_plane;
 
-        const ImageBlock m_in_ssao_attachment;
+        const ImageBlock m_in_attachment;
         const ImageBlock m_blur_texture;
     };
 };

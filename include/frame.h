@@ -13,8 +13,6 @@ namespace MiniEngine
 		//alignas( 16 ) Matrix4f m_view_projection;
 		alignas( 16 ) Vector4f m_cascades_split_depth;
 		alignas( 16 ) Matrix4f m_cascades_view_proyection[kMAX_NUMBER_CASCADES];
-        alignas( 4  ) uint32_t m_type;
-
     };
 
     struct PerFrameData
