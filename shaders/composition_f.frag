@@ -41,7 +41,7 @@ layout ( set = 0, binding = 7 ) uniform sampler2D i_rtx;
 
 layout(location = 0) out vec4 out_color;
 
-/*float evalVisibility(uint id_light)
+float evalShadowMapping(uint id_light)
 {
     vec3 frag_pos = texture(i_position_and_depth,f_uvs).xyz;
     float depth = abs(frag_pos.z);
@@ -59,15 +59,42 @@ layout(location = 0) out vec4 out_color;
     vec3 proj_coords = light_space_pos.xyz / light_space_pos.w; // Perspective divide
     proj_coords.xy = proj_coords.xy * 0.5 + 0.5; // Transform to [0,1] range
 
-    // Sample the shadow map
+    // Shadowmap idx
     float csm_idx = id_light * per_frame_data.m_cascades_count + cascade_idx;
-    float shadow = texture(i_shadowMap, vec3(proj_coords.xy, csm_idx)).r;
-  
-    // Compare the depth of the fragment with the depth stored in the shadow map
-    float bias = 0.005; // Bias to prevent shadow acne
 
-    return (proj_coords.z) > shadow ? 0.0 : 1.0;
-}*/
+    // PCF Filtering
+    vec2 texelSize = 1.0 / vec2(textureSize(i_shadowMap, 0));
+    float shadow_value = 0;
+    int sample_count = 0;
+    for(int x = -1; x <= 1; x++){
+        for(int y = -1; y <= 1; y++){
+            // sample shadowmap with neighbour texels
+            vec2 uv = proj_coords.xy + (texelSize * vec2(x,y));
+            float shadow = texture(i_shadowMap, vec3(uv, csm_idx)).r;
+            shadow_value += (proj_coords.z > shadow) ? 0.0 : 1.0;
+            sample_count++;
+        }
+    }
+
+    return shadow_value / sample_count;
+}
+
+float evalVisivility(){
+    // if rtx
+    //return texture(i_rtx, f_uvs).r;
+
+    // if shadowmapping
+    float shadow_value = 0.0;
+    uint lights = 0;
+    for( uint id_light = 0; id_light < per_frame_data.m_number_of_lights; id_light++ ){
+        uint light_type = uint( floor( per_frame_data.m_lights[id_light].m_light_pos.a ) );
+        if(light_type == 2) continue;
+
+        shadow_value += evalShadowMapping(id_light);
+        lights++;
+    }
+    return shadow_value / lights;
+}
 
 vec3 evalDiffuse()
 {
@@ -188,7 +215,7 @@ void main()
 
     out_color = vec4( pow( mapped, vec3( 1.0f / gamma ) ), 1.0 );
 
-    float shadow = texture(i_rtx, f_uvs).r;
+    float shadow = evalVisivility();
     float ssao = texture(i_ssao, f_uvs).r;
     out_color *= ssao;
     out_color *= shadow;
