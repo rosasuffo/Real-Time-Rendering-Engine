@@ -166,7 +166,7 @@ VkCommandBuffer ShadowPassVK::draw(const Frame& i_frame)
     {
         vkCmdBindPipeline(current_cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[mat_id].m_pipeline);
         // set depth bias in command buffer
-        vkCmdSetDepthBias(current_cmd,1.25f,0.f,2.5f);
+        vkCmdSetDepthBias(current_cmd,1.2f,0.f,2.5f);
         vkCmdBindDescriptorSets(current_cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[mat_id].m_pipeline_layouts, 0, 2, &m_pipelines[mat_id].m_descriptor_sets[renderer.getWindow().getCurrentImageId()].m_per_frame_descriptor, 0, nullptr);
 
         for (auto entity : m_entities_to_draw[mat_id])
@@ -213,7 +213,7 @@ void ShadowPassVK::createFbo()
         framebuffer_create_info.pAttachments = attachments.data();
         framebuffer_create_info.width = m_width;
         framebuffer_create_info.height = m_height;
-        framebuffer_create_info.layers = kMAX_NUMBER_LIGHTS * kMAX_NUMBER_CASCADES;
+        framebuffer_create_info.layers = kMAX_NUMBER_LIGHTS;
         // Create the framebuffer
 
         if (vkCreateFramebuffer(renderer.getDevice()->getLogicalDevice(), &framebuffer_create_info, nullptr, &m_fbos[i]))

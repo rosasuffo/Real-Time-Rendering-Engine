@@ -77,11 +77,8 @@ namespace MiniEngine
     constexpr float kSQRT_TWO = 1.41421356237309504880f;
     constexpr float kINV_SQRT_TWO = 1.f / kSQRT_TWO;
     constexpr uint32_t kMAX_NUMBER_LIGHTS = 10;
-    constexpr uint32_t kMAX_NUMBER_CASCADES = 4;
     constexpr uint32_t kMAX_NUMBER_OF_OBJECTS = 10000;
     constexpr uint32_t kMAX_NUMBER_OF_FRAMES = 3;
     constexpr uint32_t kSSAO_KERNEL_SIZE = 64;
     constexpr uint32_t kSSAO_NOISE_DIM = 4;
-
-    constexpr bool kCASCADES = true;
 };

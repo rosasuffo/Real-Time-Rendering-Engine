@@ -10,9 +10,7 @@ struct LightData
     vec4 m_light_pos;
     vec4 m_radiance;
     vec4 m_attenuattion;
-    vec4 m_cascades_split_depth;
-    mat4 m_cascades_view_proyection[ 4 ];
-    uint m_type;
+    mat4 m_view_proyection;
 };
 
 layout( std140, set = 0, binding = 0 ) uniform PerFrameData
@@ -27,7 +25,6 @@ layout( std140, set = 0, binding = 0 ) uniform PerFrameData
     vec4      m_clipping_planes;
     LightData m_lights[ 10 ];
     uint      m_number_of_lights;
-    uint      m_cascades_count;
 } per_frame_data;
 
 

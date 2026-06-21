@@ -12,8 +12,7 @@ struct LightData
     vec4 m_light_pos;
     vec4 m_radiance;
     vec4 m_attenuattion;
-    vec4 m_cascades_split_depth;
-    mat4 m_cascades_view_proyection[ 4 ];
+    mat4 m_view_proyection;
 };
 
 layout( std140, set = 0, binding = 0 ) uniform PerFrameData
@@ -28,7 +27,6 @@ layout( std140, set = 0, binding = 0 ) uniform PerFrameData
     vec4      m_clipping_planes;
     LightData m_lights[ 10 ];
     uint      m_number_of_lights;
-    uint      m_cascades_count;
 } per_frame_data;
 
 layout ( set = 0, binding = 1 ) uniform sampler2D i_albedo;
@@ -44,23 +42,10 @@ layout(location = 0) out vec4 out_color;
 float evalShadowMapping(uint id_light)
 {
     vec3 frag_pos = texture(i_position_and_depth,f_uvs).xyz;
-    float depth = abs(frag_pos.z);
-
-    uint cascade_idx = 0;
-    for(uint c = 0; c < per_frame_data.m_cascades_count; c++){
-        if(depth < per_frame_data.m_lights[id_light].m_cascades_split_depth[c]){
-            cascade_idx = c;
-            break;
-        }
-    }
-
-    vec4 light_space_pos = per_frame_data.m_lights[ id_light ].m_cascades_view_proyection[cascade_idx] * vec4(frag_pos, 1.f);
+    vec4 light_space_pos = per_frame_data.m_lights[ id_light ].m_view_proyection * vec4(frag_pos, 1.f);
 
     vec3 proj_coords = light_space_pos.xyz / light_space_pos.w; // Perspective divide
     proj_coords.xy = proj_coords.xy * 0.5 + 0.5; // Transform to [0,1] range
-
-    // Shadowmap idx
-    float csm_idx = id_light * per_frame_data.m_cascades_count + cascade_idx;
 
     // PCF Filtering
     vec2 texelSize = 1.0 / vec2(textureSize(i_shadowMap, 0));
@@ -70,7 +55,7 @@ float evalShadowMapping(uint id_light)
         for(int y = -1; y <= 1; y++){
             // sample shadowmap with neighbour texels
             vec2 uv = proj_coords.xy + (texelSize * vec2(x,y));
-            float shadow = texture(i_shadowMap, vec3(uv, csm_idx)).r;
+            float shadow = texture(i_shadowMap, vec3(uv, id_light)).r;
             shadow_value += (proj_coords.z > shadow) ? 0.0 : 1.0;
             sample_count++;
         }
@@ -81,7 +66,7 @@ float evalShadowMapping(uint id_light)
 
 float evalVisivility(){
     // if rtx
-    //return texture(i_rtx, f_uvs).r;
+    return texture(i_rtx, f_uvs).r;
 
     // if shadowmapping
     float shadow_value = 0.0;

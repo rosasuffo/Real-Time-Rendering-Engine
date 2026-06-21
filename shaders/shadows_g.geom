@@ -1,8 +1,8 @@
 #version 460
 
 layout(triangles) in;
-// max_vertices = (numero de vertices de la primitiva (3)) * (numero de capas/luces (10) * (cascades (4)))
-layout(triangle_strip, max_vertices = 120) out;
+// max_vertices = (numero de vertices de la primitiva (3)) * (numero de capas/luces (10))
+layout(triangle_strip, max_vertices = 30) out;
 
 #extension GL_ARB_shader_draw_parameters : enable
 
@@ -17,8 +17,7 @@ struct LightData
     vec4 m_light_pos;
     vec4 m_radiance;
     vec4 m_attenuattion;
-    vec4 m_cascades_split_depth;
-    mat4 m_cascades_view_proyection[ 4 ];
+    mat4 m_view_proyection;
 };
 
 layout( std140, set = 0, binding = 0 ) uniform PerFrameData
@@ -33,31 +32,22 @@ layout( std140, set = 0, binding = 0 ) uniform PerFrameData
     vec4      m_clipping_planes;
     LightData m_lights[ 10 ];
     uint      m_number_of_lights;
-    uint      m_cascades_count;
 } per_frame_data;
 
 
 
 void main() {
-    int MAX_CASCADES = 4;
-
     for (int i = 0; i < per_frame_data.m_number_of_lights; ++i) {
         uint light_type = uint( floor( per_frame_data.m_lights[i].m_light_pos.a ) );
 
-        if(light_type != 2){ // if not ambient
-            //CASCADES
-            for(uint c = 0; c < per_frame_data.m_cascades_count; c++)
-            {
-                mat4 light_viewproj = per_frame_data.m_lights[i].m_cascades_view_proyection[c];
-
-                for(int v = 0; v < 3; v++)
-                {
-                    gl_Layer = i * MAX_CASCADES + int(c);
-                    gl_Position = light_viewproj * vec4(g_position[v],1.0);
-                    EmitVertex();
-                }
-                EndPrimitive();
-            }
+        if(light_type == 2) continue; 
+        mat4 light_viewproj = per_frame_data.m_lights[i].m_view_proyection;
+        for(int v = 0; v < 3; v++)
+        {
+            gl_Layer = i;
+            gl_Position = light_viewproj * vec4(g_position[v],1.0);
+            EmitVertex();
         }
+        EndPrimitive();
     }
 }
